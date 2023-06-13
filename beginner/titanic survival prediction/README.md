@@ -30,7 +30,7 @@ This project is implemented in Python, with the use of the following libraries:
 
 ## Results
 
-The final model achieved an accuracy of XX% on the test set. Detailed results and discussion can be found in the [Jupyter notebook](link-to-notebook).
+The final model achieved an accuracy of XX% on the test set. Detailed results and discussion can be found in the [Jupyter notebook](https://github.com/dev-ro/machine-learning-projects/blob/main/beginner/titanic%20survival%20prediction/titanic.ipynb).
 
 ## Future Work
 
