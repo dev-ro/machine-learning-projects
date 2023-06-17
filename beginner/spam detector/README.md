@@ -6,7 +6,7 @@ In this project, a machine learning model was developed to distinguish between s
 
 ## Dataset
 
-The dataset used for this project is the [Spambase Data Set](https://archive.ics.uci.edu/ml/datasets/spambase) from the UCI Machine Learning Repository. It comprises of labeled emails categorized as either 'spam' or 'ham'.
+The dataset used for this project is the [SMS Spam Collection Dataset](https://archive.ics.uci.edu/dataset/228/sms+spam+collection) from the UCI Machine Learning Repository. It comprises of labeled emails categorized as either 'spam' or 'ham'.
 
 ## Requirements
 
