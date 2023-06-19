@@ -1,6 +1,6 @@
-# Machine Learning Portfolio
+# Machine Learning Portfolio (in progress)
 
-This repository contains a collection of machine learning projects I completed for academic, self-learning, and hobby purposes. The projects are categorized into beginner, intermediate, and advanced levels, and are written in Python using various machine learning libraries and tools.
+This repository contains a collection of machine learning projects I'm working on for academic, self-learning, and hobby purposes. The projects are categorized into beginner, intermediate, and advanced levels, and are written in Python using various machine learning libraries and tools.
 
 ## Projects
 
