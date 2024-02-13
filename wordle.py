@@ -218,6 +218,38 @@ letter_scores = {
 }
 
 
+def find_filler_words(words, letters):
+    """
+    Find filler words that contain the highest combination of the specified letters.
+    """
+    # Filter words that contain any of the specified letters
+    filtered_words = [
+        word for word in words if any(letter in word for letter in letters)
+    ]
+
+    # Score words based on how many of the specified letters they contain
+    scored_words = [
+        (word, sum(word.count(letter) for letter in set(letters)))
+        for word in filtered_words
+    ]
+
+    # Sort words by their score in descending order to get words with the most specified letters first
+    scored_words.sort(key=lambda x: x[1], reverse=True)
+
+    # Return the top 5 words with the highest scores
+    return [word for word, score in scored_words][:5]
+
+
+def prompt_for_filler_letters():
+    """
+    Prompt the user to enter letters for searching filler words.
+    """
+    print("Enter letters to search for filler words (e.g., 'bhptw'):")
+    letters = input().strip().lower()
+    # You may want to add validation to ensure input is only letters
+    return letters
+
+
 def calculate_word_score(word):
     """
     Calculate a score for a word based on the presence of common letters.
@@ -226,51 +258,16 @@ def calculate_word_score(word):
     return sum(letter_scores.get(letter, 0) for letter in set(word))
 
 
-def recommend(words):
+# Update the recommend function to return a list of recommendations
+def recommend(words, n=5):
     """
-    Recommend a guess based on the possible set of words.
+    Recommend up to n guesses based on the possible set of words.
     Prioritize words that have a high score based on letter commonality and variety.
     """
-    if guess_count <= 3:
-        # Score words based on their letters
-        scored_words = [(word, calculate_word_score(word)) for word in words]
-        # Sort words by their score in descending order
-        scored_words.sort(key=lambda x: x[1], reverse=True)
-        # Prefer words with the highest score
-        high_score_words = [
-            word for word, score in scored_words if score == scored_words[0][1]
-        ]
-        guess = random.choice(high_score_words)
-    else:
-        guess = random.choice(words)
-
-    print(f"\n🤔 recommended_guess = '{guess}' 🤔")
-    return guess
-
-
-# def recommend(words):
-#     """
-#     This function recommends a guess based on the possible set of words.
-
-#     The function selects a word that has only distinct characters if possible.
-#     If there are no words with distinct characters, the function selects a word at random.
-
-#     The function also selects a word at random if the number of possible words is greater than 3 and the guess count is
-#     greater than 3.
-#     """
-#     # Unique words are the words that have only distinct characters
-#     unique_words = [word for word in words if len(set(word)) == len(word)]
-
-#     # Select the word to guess
-#     if guess_count == 1 and "soare" in words:
-#         guess = "soare"
-#     elif unique_words and guess_count <= 3:
-#         guess = random.choice(unique_words)
-#     else:
-#         guess = random.choice(words)
-
-#     print(f"\n🤔 recommended_guess = '{guess}' 🤔")
-#     return guess
+    scored_words = [(word, calculate_word_score(word)) for word in words]
+    scored_words.sort(key=lambda x: x[1], reverse=True)
+    recommendations = [word for word, score in scored_words[:n]]
+    return recommendations
 
 
 def get_guess():
@@ -278,23 +275,29 @@ def get_guess():
     This function prompts the user to enter their guess and the corresponding feedback.
     """
     # The user manually selects a guess
+    recommended_guesses = recommend(words, 5)  # Get up to 5 recommendations
+    print("Recommended guesses:")
+    for i, guess in enumerate(recommended_guesses, 1):
+        print(f"{i}. {guess}")
+    print("Enter your guess, or choose 1-5 from the recommendations, or 0 for fillers:")
+
     guess = ""
     while not guess:
-        recommended_guess = recommend(words)
-        guess = input("enter the word you guessed (r for recommended): ")
-        guess = guess.strip().lower()
-        if guess == "":
-            continue
-        # if guess contains no vowels, it's not a valid word
-        if not any(vowel in guess for vowel in "aeiou") and guess != "r":
-            print("\t⚠️  guess here, not result ⚠️")
-            guess = ""
-        # if guess == "r" then the user wants the recommended guess
-        if guess == "r":
-            guess = recommended_guess
-
-    # The function automatically recommends a guess
-    # guess = recommend(words)
+        user_input = input().strip().lower()
+        if user_input.isdigit() and 1 <= int(user_input) <= len(recommended_guesses):
+            guess = recommended_guesses[int(user_input) - 1]
+        elif user_input.isalpha() and len(user_input) == len(
+            recommended_guesses[0]
+        ):  # Assume all words are same length
+            guess = user_input
+        elif user_input == "0":
+            letters = prompt_for_filler_letters()
+            filler_words = find_filler_words(words, letters)
+            print(f"Filler words for letters '{letters}': {', '.join(filler_words)}")
+        else:
+            print(
+                "Invalid input. Please enter a valid guess or select a recommendation by number."
+            )
 
     # Prompt the user to enter the result of their guess
     print(f"put the result of '{guess}'")
