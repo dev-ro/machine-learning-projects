@@ -142,7 +142,15 @@ else:
 def is_good_guess(word):
     """
     This function checks if the user's guess is valid.
+    First it checks if the guess is the same length as WORD_LENGTH
+    Then it checks if the guess is a feedback response of 'g', 'y', and/or 'b'
     """
+    if len(word) != WORD_LENGTH and word.isalpha():
+        print("\t⚠️ wrong guess length")
+        return False
+    if all(char in "gyb" for char in word):
+        print("\t⚠️ enter a guess here, not feedback")
+        return False
     return True
 
 
@@ -199,37 +207,76 @@ def reverse_filter(words, guess):
 
     return words
 
-
+# based on oxford 1995 study of common letters in English words
 letter_scores = {
-    "r": 1.5,
-    "s": 1.1,
-    "t": 1.3,
-    "l": 1,
-    "n": 1.2,
-    "e": 2,
-    "a": 1.8,
-    "o": 1.3,
-    "i": 1.5,
-    "c": 0.8,
-    "j": -1,
-    "q": -1,
-    "x": -1,
-    "z": -1.5,
+    "e": 10.0,
+    "a": 6.86503856041131,
+    "r": 5.858611825192803,
+    "i": 5.812339331619537,
+    "o": 5.372750642673522,
+    "t": 5.129820051413882,
+    "n": 4.782776349614396,
+    "s": 3.730077120822622,
+    "l": 3.4408740359897174,
+    "c": 2.341902313624679,
+    "u": 1.2892030848329048,
+    "d": 1.0,
 }
+
+
+def find_varying_positions(words):
+    # Assuming all words are of the same length
+    if not words:
+        return {}
+
+    word_length = len(words[0])
+    varying_positions = {i: set() for i in range(word_length)}
+
+    for word in words:
+        for i, letter in enumerate(word):
+            varying_positions[i].add(letter)
+
+    # Filter out positions that do not vary (where all letters are the same)
+    varying_positions = {
+        pos: letters for pos, letters in varying_positions.items() if len(letters) > 1
+    }
+
+    return varying_positions
+
+
+def collect_varying_letters(varying_positions):
+    # Collect all unique letters from varying positions
+    unique_varying_letters = set()
+    for letters in varying_positions.values():
+        unique_varying_letters |= letters  # Union of sets to collect unique letters from all positions with varying letters
+
+    return "".join(sorted(unique_varying_letters))
+
+
+### Example Usage
+# words = ["gaging", "gaming", "gaping", "gazing", "yawing", "japing", "jawing",
+#          "maying", "mawing", "mazing", "naging", "naming", "paging", "paying",
+#          "paving", "pawing", "waging", "waying", "waning", "waving", "waxing"]
+# varying_positions = find_varying_positions(words)
+# unique_varying_letters = collect_varying_letters(varying_positions)
+# print(f"Unique Varying Letters: {unique_varying_letters}")
 
 
 def find_filler_words(words, letters):
     """
-    Find filler words that contain the highest combination of the specified letters.
+    Find filler words that contain the highest combination of the specified letters,
+    without counting double letters more than once.
     """
     # Filter words that contain any of the specified letters
     filtered_words = [
-        word for word in words if any(letter in word for letter in letters)
+        word
+        for word in words
+        if any(letter in word for letter in letters) and len(word) == WORD_LENGTH
     ]
 
-    # Score words based on how many of the specified letters they contain
+    # Score words based on the presence of unique specified letters
     scored_words = [
-        (word, sum(word.count(letter) for letter in set(letters)))
+        (word, sum(1 for letter in set(letters) if letter in word))
         for word in filtered_words
     ]
 
@@ -265,6 +312,7 @@ def recommend(words, n=5):
     Prioritize words that have a high score based on letter commonality and variety.
     """
     scored_words = [(word, calculate_word_score(word)) for word in words]
+    # sort by score in descending order
     scored_words.sort(key=lambda x: x[1], reverse=True)
     recommendations = [word for word, score in scored_words[:n]]
     return recommendations
@@ -284,20 +332,15 @@ def get_guess():
     guess = ""
     while not guess:
         user_input = input().strip().lower()
+
+        if user_input == "0":
+            letters = prompt_for_filler_letters()
+            filler_words = find_filler_words(temp_words, letters)
+            print(f"Filler words for letters '{letters}': {', '.join(filler_words)}")
         if user_input.isdigit() and 1 <= int(user_input) <= len(recommended_guesses):
             guess = recommended_guesses[int(user_input) - 1]
-        elif user_input.isalpha() and len(user_input) == len(
-            recommended_guesses[0]
-        ):  # Assume all words are same length
+        if is_good_guess(user_input) and user_input.isalpha():
             guess = user_input
-        elif user_input == "0":
-            letters = prompt_for_filler_letters()
-            filler_words = find_filler_words(words, letters)
-            print(f"Filler words for letters '{letters}': {', '.join(filler_words)}")
-        else:
-            print(
-                "Invalid input. Please enter a valid guess or select a recommendation by number."
-            )
 
     # Prompt the user to enter the result of their guess
     print(f"put the result of '{guess}'")
