@@ -1,0 +1,6 @@
+features:
+auto-guess (inputs top recommended guess)
+remove tiktok banned words
+https://words.chlod.net/ clean and merge with dictionary
+CHAT CHAMP
+WORD CHALLENGE
