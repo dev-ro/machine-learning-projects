@@ -157,7 +157,7 @@ def reverse_filter(words, guess):
 
 from collections import Counter
 
-
+# now letter frequency is calculated from the words in the dictionary
 def letter_frequency(words, length=WORD_LENGTH, prefix=PREFIX):
     # Filter words by the specified length and prefix if provided
     filtered_words = [
