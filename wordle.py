@@ -166,6 +166,10 @@ def letter_frequency(words, length=WORD_LENGTH, prefix=PREFIX):
         if len(word) == length and (prefix is None or word.startswith(prefix))
     ]
 
+    # Remove the prefix from the filtered words for frequency calculation
+    if prefix:
+        filtered_words = [word[len(prefix) :] for word in filtered_words]
+
     # Join all the filtered words into a single string
     all_letters = "".join(filtered_words)
 
@@ -301,7 +305,7 @@ def recommend(words, n=5, length=WORD_LENGTH, prefix=PREFIX):
     # Sort by score in descending order
     scored_words.sort(key=lambda x: x[1], reverse=True)
     recommendations = [word for word, score in scored_words[:n]]
-    return recommendations
+    return scored_words[:n]
 
 
 def get_guess():
@@ -311,8 +315,8 @@ def get_guess():
     # The user manually selects a guess
     recommended_guesses = recommend(words, 5)  # Get up to 5 recommendations
     print("Recommended guesses:")
-    for i, guess in enumerate(recommended_guesses, 1):
-        print(f"{i}. {guess}")
+    for i, (guess, score) in enumerate(recommended_guesses, 1):
+        print(f"{i}. {guess} - {round(score, 1)}")
     print("Enter your guess, or choose 1-5 from the recommendations, or 0 for fillers:")
 
     guess = ""
@@ -324,7 +328,7 @@ def get_guess():
             filler_words = find_filler_words(temp_words, letters)
             print(f"Filler words for letters '{letters}': {', '.join(filler_words)}")
         if user_input.isdigit() and 1 <= int(user_input) <= len(recommended_guesses):
-            guess = recommended_guesses[int(user_input) - 1]
+            guess = recommended_guesses[int(user_input) - 1][0]
         if is_good_guess(user_input) and user_input.isalpha():
             guess = user_input
 
