@@ -20,7 +20,7 @@ FILENAME = "words.json"  # Name of the file to save the words
 
 # Default word length
 DEFAULT_WORD_LENGTH = 5
-PREFIX = ""
+PREFIX = None
 
 # Check if a prefix argument is provided
 if len(sys.argv) > 2:
@@ -38,75 +38,6 @@ if len(sys.argv) > 1:
         WORD_LENGTH = DEFAULT_WORD_LENGTH
 else:
     WORD_LENGTH = DEFAULT_WORD_LENGTH
-
-# # Getting the set of all English words
-# words = words.words()
-# # lowercasing all the words
-# words = [word.lower() for word in words]
-# # set of all words
-# words.extend(get_english_words_set(["web2"], lower=True))
-# words = list(set(words))
-
-# # countries = [country.name.lower() for country in pycountry.countries]
-# # countries.extend([country.name.lower() for country in pycountry.subdivisions])
-# # countries.extend([country.name.lower() for country in pycountry.languages])
-# # countries.extend([country.name.lower() for country in pycountry.currencies])
-# # countries.extend([country.name.lower() for country in pycountry.scripts])
-
-# # words.extend(countries)
-
-
-# def generate_words(words):
-#     """
-#     This function generates a list of words that are of length WORD_LENGTH.
-#     """
-
-#     inflected_words = []
-
-#     for word in words:
-#         try:
-#             inflected_words.append(pluralize(word))
-#         except:
-#             pass
-#         try:
-#             inflected_words.append(comparative(word))
-#         except:
-#             pass
-#         try:
-#             inflected_words.append(superlative(word))
-#         except:
-#             pass
-#         try:
-#             inflected_words.extend(lexeme(word))
-#         except:
-#             pass
-
-#     words.extend(inflected_words)
-
-
-#     # Filter the words to only include words of length WORD_LENGTH
-#     # words = [word for word in words if len(word) == WORD_LENGTH]
-
-#     # remove words that have a space in them
-#     words = [word for word in words if " " not in word]
-
-#     words.extend(countries)
-#     return list(set(words))
-
-
-# def load_or_generate_words(filename, words=words):
-#     """Load words from a file if it exists, otherwise generate and save them."""
-#     if os.path.exists(filename):
-#         print(f"Loading words from {filename}...\n")
-#         with open(filename, "r") as file:
-#             return json.load(file)
-#     else:
-#         print("Generating words...")
-#         words = generate_words(words)
-#         words.sort()
-#         with open(filename, "w") as file:
-#             json.dump(words, file)
-#         return words
 
 # https://github.com/dwyl/english-words
 
@@ -207,21 +138,71 @@ def reverse_filter(words, guess):
 
     return words
 
-# based on oxford 1995 study of common letters in English words
-letter_scores = {
-    "e": 10.0,
-    "a": 6.865,
-    "r": 5.8586,
-    "i": 5.8123,
-    "o": 5.3727,
-    "t": 5.1298,
-    "n": 4.7827,
-    "s": 3.73,
-    "l": 3.4408,
-    "c": 2.3419,
-    "u": 1.2892,
-    "d": 1.0,
-}
+
+# # based on oxford 1995 study of common letters in English words
+# letter_scores = {
+#     "e": 10.0,
+#     "a": 6.865,
+#     "r": 5.8586,
+#     "i": 5.8123,
+#     "o": 5.3727,
+#     "t": 5.1298,
+#     "n": 4.7827,
+#     "s": 3.73,
+#     "l": 3.4408,
+#     "c": 2.3419,
+#     "u": 1.2892,
+#     "d": 1.0,
+# }
+
+from collections import Counter
+
+
+def letter_frequency(words, length=WORD_LENGTH, prefix=PREFIX):
+    # Filter words by the specified length and prefix if provided
+    filtered_words = [
+        word
+        for word in words
+        if len(word) == length and (prefix is None or word.startswith(prefix))
+    ]
+
+    # Join all the filtered words into a single string
+    all_letters = "".join(filtered_words)
+
+    # Calculate the frequency of each letter
+    frequency = Counter(all_letters)
+
+    # Calculate the total number of letters
+    total_letters = sum(frequency.values())
+
+    # Convert the frequency to percentage
+    percentage_frequency = {
+        letter: (count / total_letters) * 100 for letter, count in frequency.items()
+    }
+
+    # Sort the frequencies in descending order
+    sorted_percentage_frequency = dict(
+        sorted(percentage_frequency.items(), key=lambda item: item[1], reverse=True)
+    )
+
+    return sorted_percentage_frequency
+
+
+def normalize_frequencies(frequencies):
+    max_freq = max(frequencies.values())
+    min_freq = min(frequencies.values())
+
+    # Normalize the frequencies
+    normalized_frequencies = {
+        letter: round(((value - min_freq) / (max_freq - min_freq)) * 100, 2)
+        for letter, value in frequencies.items()
+    }
+
+    return normalized_frequencies
+
+
+freq = letter_frequency(words)
+letter_scores = normalize_frequencies(freq)
 
 
 def find_varying_positions(words):
@@ -306,13 +287,18 @@ def calculate_word_score(word):
 
 
 # Update the recommend function to return a list of recommendations
-def recommend(words, n=5):
+def recommend(words, n=5, length=WORD_LENGTH, prefix=PREFIX):
     """
     Recommend up to n guesses based on the possible set of words.
     Prioritize words that have a high score based on letter commonality and variety.
     """
-    scored_words = [(word, calculate_word_score(word)) for word in words]
-    # sort by score in descending order
+    filtered_words = [
+        word
+        for word in words
+        if len(word) == length and (prefix is None or word.startswith(prefix))
+    ]
+    scored_words = [(word, calculate_word_score(word)) for word in filtered_words]
+    # Sort by score in descending order
     scored_words.sort(key=lambda x: x[1], reverse=True)
     recommendations = [word for word, score in scored_words[:n]]
     return recommendations
@@ -424,7 +410,7 @@ while keep_playing(choice):
     # If the number of possible words is small, print them out
     if len(words) <= 30:
         p_words = pretty_print(words)
-        print(f"🔥 {len(words)} remaining: {p_words}🔥")
+        print(f"🔥 {len(words)} remaining: {p_words} 🔥")
     # If there's only one possible word left, we've found the answer
     if len(words) == 1:
         print("✅ found it! ✅\n")
@@ -440,6 +426,3 @@ while keep_playing(choice):
         else:
             print("🎉 yay! 🎉")
             break
-
-
-
