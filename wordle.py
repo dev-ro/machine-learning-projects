@@ -410,6 +410,7 @@ while keep_playing(choice):
     # Filter the possible words based on the user's guess and feedback
     n = min(len(words), 9)  # Limit the number of recommendations to 9
     words = reverse_filter(words, get_guess(n))
+    guess_count += 1  # Increment the guess count for scoring
 
     if len(words) > 30:
         print(f"{len(words)} remaining")
