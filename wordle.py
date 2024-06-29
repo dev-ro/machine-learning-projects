@@ -70,16 +70,6 @@ def reverse_filter(words, guess):
     """
     Filters a list of words based on the user's guess and feedback.
 
-    This function works in two stages:
-    1. Filters words based on the count of 'g' (green) and 'y' (yellow) feedback for each letter.
-       This ensures that the feedback matches the count of 'g' and 'y' for each letter.
-       This stage is important for handling cases where the answer contains duplicate letters.
-       For example, if the answer is 'dried' and the guess is 'daddy' with feedback 'gbybb',
-       the word 'dried' should not be filtered out because it contains a 'd' with green feedback
-       and a 'd' with black feedback. This allows the script to handle such cases correctly.
-    2. Filters words based on the position of the letter and feedback.
-       This ensures that the position-specific feedback is applied to each letter in the guess.
-
     Feedback explanation:
     - 'g' stands for 'green' (correct letter in the correct position)
     - 'y' stands for 'yellow' (correct letter in the wrong position)
@@ -91,6 +81,16 @@ def reverse_filter(words, guess):
     - The letter 'd' must be present in the first position.
     - The letter 'r' must be present but not in the second position.
     - The letters 'i', 'e', and 'd' must not be present in the word more times than allowed by the feedback.
+
+    This function works in two stages:
+    1. Filters words based on the count of 'g' (green) and 'y' (yellow) feedback for each letter.
+       This ensures that the feedback matches the count of 'g' and 'y' for each letter.
+       This stage is important for handling cases where the answer contains duplicate letters.
+       For example, if the answer is 'dried' and the guess is 'daddy' with feedback 'gbybb',
+       the word 'dried' should not be filtered out because it contains a 'd' with green feedback
+       and a 'd' with black feedback. This allows the script to handle such cases correctly.
+    2. Filters words based on the position of the letter and feedback.
+       This ensures that the position-specific feedback is applied to each letter in the guess.
 
     Parameters:
     words (list): List of candidate words to filter.
