@@ -68,25 +68,36 @@ def is_good_guess(word):
 
 def reverse_filter(words, guess):
     """
-    This function filters the words based on the user's guess and feedback.
-    It returns a list of words that match the feedback.
+    Filters a list of words based on the user's guess and feedback.
 
-    The function first filters the words based on the count of 'g' and 'y' for each letter.
-    Then it filters the words based on the position of the letter and feedback.
+    This function works in two stages:
+    1. Filters words based on the count of 'g' (green) and 'y' (yellow) feedback for each letter.
+       This ensures that the feedback matches the count of 'g' and 'y' for each letter.
+       This stage is important for handling cases where the answer contains duplicate letters.
+       For example, if the answer is 'dried' and the guess is 'daddy' with feedback 'gbybb',
+       the word 'dried' should not be filtered out because it contains a 'd' with green feedback
+       and a 'd' with black feedback. This allows the script to handle such cases correctly.
+    2. Filters words based on the position of the letter and feedback.
+       This ensures that the position-specific feedback is applied to each letter in the guess.
 
-    For example, if the guess is [('a', 'g'), ('e', 'y'), ('i', 'b'), ('o', 'b'), ('u', 'b')],
+    Feedback explanation:
+    - 'g' stands for 'green' (correct letter in the correct position)
+    - 'y' stands for 'yellow' (correct letter in the wrong position)
+    - 'b' stands for 'black' (incorrect letter)
+
+    Example:
+    If the guess is [('d', 'g'), ('r', 'y'), ('i', 'b'), ('e', 'b'), ('d', 'b')],
     the function will filter the words based on the following criteria:
-    - The letter 'a' must be present in the first position.
-    - The letter 'e' must be present but not in the second position.
-    - The letters 'i', 'o', and 'u' must not be present in the word.
+    - The letter 'd' must be present in the first position.
+    - The letter 'r' must be present but not in the second position.
+    - The letters 'i', 'e', and 'd' must not be present in the word more times than allowed by the feedback.
 
-    The function returns a list of words that match the feedback.
+    Parameters:
+    words (list): List of candidate words to filter.
+    guess (list): List of tuples containing the letter and its feedback.
 
-    The function is based on the Mastermind game, where the player has to guess the
-    correct combination of colors based on the feedback of 'black' and 'white' peg
-    s. In this case, 'g' stands for 'green' (correct letter in the correct position),
-    'y' stands for 'yellow' (correct letter in the wrong position), and 'b' stands for
-    'black' (incorrect letter).
+    Returns:
+    list: List of words that match the feedback.
     """
     # Dictionary to hold counts of 'g' and 'y' for each letter
     correct_counts = {letter: 0 for letter, _ in guess}
