@@ -77,7 +77,7 @@ def reverse_filter(words, guess):
 
     Example:
     The guess is "daddy" and the feedback is "gbybb".
-    
+
     guess = [('d', 'g'), ('a', 'b'), ('d', 'y'), ('d', 'b'), ('y', 'b')]
 
     The function will filter the words based on the following criteria:
@@ -115,6 +115,15 @@ def reverse_filter(words, guess):
 
     # Filter words based on 'g' and 'y' counts first
     def filter_based_on_feedback(word):
+        """
+        Filter words based on the count of 'g' and 'y' for each letter.
+
+        Parameters:
+        word (str): A word to filter.
+
+        Returns:
+        bool: True if the word passes the filter, False otherwise
+        """
         word_letter_counts = {letter: word.count(letter) for letter, _ in guess}
         for letter, feedback in guess:
             if feedback == "g" and word_letter_counts[letter] < correct_counts[letter]:
