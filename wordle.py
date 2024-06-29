@@ -167,7 +167,17 @@ def letter_frequency(words=temp_words, length=WORD_LENGTH, prefix=PREFIX):
 
 
 def normalize_frequencies(frequencies=letter_frequency()):
-    """Normalize the frequencies of letters to a scale of 0 to 10."""
+    """
+    Normalize the frequencies of letters to a scale of 0 to 10.
+    Returns a dictionary of normalized frequencies saved as "letter_scores".
+
+    The normalization formula is:
+    normalized_value = ((value - min_value) / (max_value - min_value)) * 10
+
+    The normalized frequencies are used to score words based on the presence
+    of common letters. The score is calculated by summing the normalized
+    frequencies of letters in the word.
+    """
 
     max_freq = max(frequencies.values())
     min_freq = min(frequencies.values())
