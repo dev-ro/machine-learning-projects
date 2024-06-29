@@ -67,6 +67,27 @@ def is_good_guess(word):
 
 
 def reverse_filter(words, guess):
+    """
+    This function filters the words based on the user's guess and feedback.
+    It returns a list of words that match the feedback.
+
+    The function first filters the words based on the count of 'g' and 'y' for each letter.
+    Then it filters the words based on the position of the letter and feedback.
+
+    For example, if the guess is [('a', 'g'), ('e', 'y'), ('i', 'b'), ('o', 'b'), ('u', 'b')],
+    the function will filter the words based on the following criteria:
+    - The letter 'a' must be present in the first position.
+    - The letter 'e' must be present but not in the second position.
+    - The letters 'i', 'o', and 'u' must not be present in the word.
+
+    The function returns a list of words that match the feedback.
+
+    The function is based on the Mastermind game, where the player has to guess the
+    correct combination of colors based on the feedback of 'black' and 'white' peg
+    s. In this case, 'g' stands for 'green' (correct letter in the correct position),
+    'y' stands for 'yellow' (correct letter in the wrong position), and 'b' stands for
+    'black' (incorrect letter).
+    """
     # Dictionary to hold counts of 'g' and 'y' for each letter
     correct_counts = {letter: 0 for letter, _ in guess}
     present_counts = {letter: 0 for letter, _ in guess}
