@@ -1,21 +1,9 @@
-import random
-
-# from pattern.en import pluralize, comparative, superlative, lexeme
-
-# from english_words import get_english_words_set
-# import pycountry
-
-# # import nltk
-# # nltk.download('words')
-# from nltk.corpus import words
 import json
 import os
 import sys
+from collections import Counter
 
-# country = pycountry.countries.lookup('de')
-# print(country)
-
-WORD_LENGTH = 8
+WORD_LENGTH = None
 FILENAME = "words.json"  # Name of the file to save the words
 
 # Default word length
@@ -39,8 +27,6 @@ if len(sys.argv) > 1:
 else:
     WORD_LENGTH = DEFAULT_WORD_LENGTH
 
-# https://github.com/dwyl/english-words
-
 
 def load_words(filename):
     """Load words from a file if it exists, otherwise print error."""
@@ -53,10 +39,8 @@ def load_words(filename):
         sys.exit(1)
 
 
-words = load_words(FILENAME)
-
-# convert dictionary to list
-# words = list(words.keys())
+words = load_words(FILENAME)  # this list will be filtered down to the possible words
+# use temp_words to store the full list of words. used for adding new words
 temp_words = words
 
 if PREFIX:
@@ -65,9 +49,6 @@ if PREFIX:
     ]
 else:
     words = [word for word in words if len(word) == WORD_LENGTH]
-
-# This code is designed to "cheat" a word guessing game
-# The user inputs character feedback which helps refine the possible set of words
 
 
 def is_good_guess(word):
@@ -139,26 +120,19 @@ def reverse_filter(words, guess):
     return words
 
 
-# # based on oxford 1995 study of common letters in English words
-# letter_scores = {
-#     "e": 10.0,
-#     "a": 6.865,
-#     "r": 5.8586,
-#     "i": 5.8123,
-#     "o": 5.3727,
-#     "t": 5.1298,
-#     "n": 4.7827,
-#     "s": 3.73,
-#     "l": 3.4408,
-#     "c": 2.3419,
-#     "u": 1.2892,
-#     "d": 1.0,
-# }
+def letter_frequency(words=temp_words, length=WORD_LENGTH, prefix=PREFIX):
+    """
+    Calculates the frequency of letters in words of a specified length and
+    prefix. This is more efficient than the Monte Carlo simulation to find
+    the best starting word, more efficient than calculating the frequency
+    of all letters in the dictionary, and more accurate than referring to
+    studies on letter frequency in languages, which might be based on real
+    text data, not the dictionary.
 
-from collections import Counter
+    The function returns a dictionary of letter frequencies in descending order
+    that you pass to the normalize_frequencies function.
+    """
 
-# now letter frequency is calculated from the words in the dictionary
-def letter_frequency(words, length=WORD_LENGTH, prefix=PREFIX):
     # Filter words by the specified length and prefix if provided
     filtered_words = [
         word
@@ -192,24 +166,30 @@ def letter_frequency(words, length=WORD_LENGTH, prefix=PREFIX):
     return sorted_percentage_frequency
 
 
-def normalize_frequencies(frequencies):
+def normalize_frequencies(frequencies=letter_frequency()):
+    """Normalize the frequencies of letters to a scale of 0 to 10."""
+
     max_freq = max(frequencies.values())
     min_freq = min(frequencies.values())
 
     # Normalize the frequencies
     normalized_frequencies = {
-        letter: round(((value - min_freq) / (max_freq - min_freq)) * 100, 2)
+        letter: ((value - min_freq) / (max_freq - min_freq)) * 10
         for letter, value in frequencies.items()
     }
 
     return normalized_frequencies
 
 
-freq = letter_frequency(words)
-letter_scores = normalize_frequencies(freq)
+letter_scores = normalize_frequencies()
 
 
 def find_varying_positions(words):
+    """
+    Find positions in words where letters vary among the words.
+    For example, in the words 'gaming' and 'japing',
+    the letters vary at the first and third position.
+    """
     # Assuming all words are of the same length
     if not words:
         return {}
@@ -230,7 +210,10 @@ def find_varying_positions(words):
 
 
 def collect_varying_letters(varying_positions):
-    # Collect all unique letters from varying positions
+    """
+    Collect all unique letters from varying positions.
+    For example 'gaming' and 'japing' would return 'gjmp'.
+    """
     unique_varying_letters = set()
     for letters in varying_positions.values():
         unique_varying_letters |= letters  # Union of sets to collect unique letters from all positions with varying letters
@@ -238,16 +221,7 @@ def collect_varying_letters(varying_positions):
     return "".join(sorted(unique_varying_letters))
 
 
-### Example Usage
-# words = ["gaging", "gaming", "gaping", "gazing", "yawing", "japing", "jawing",
-#          "maying", "mawing", "mazing", "naging", "naming", "paging", "paying",
-#          "paving", "pawing", "waging", "waying", "waning", "waving", "waxing"]
-# varying_positions = find_varying_positions(words)
-# unique_varying_letters = collect_varying_letters(varying_positions)
-# print(f"Unique Varying Letters: {unique_varying_letters}")
-
-
-def find_filler_words(words, letters):
+def find_filler_words(words, letters, n=6):
     """
     Find filler words that contain the highest combination of the specified letters,
     without counting double letters more than once.
@@ -268,8 +242,8 @@ def find_filler_words(words, letters):
     # Sort words by their score in descending order to get words with the most specified letters first
     scored_words.sort(key=lambda x: x[1], reverse=True)
 
-    # Return the top 5 words with the highest scores
-    return [word for word, score in scored_words][:5]
+    # Return the top n words with the highest scores
+    return [word for word, score in scored_words][:n]
 
 
 def prompt_for_filler_letters():
@@ -278,16 +252,27 @@ def prompt_for_filler_letters():
     """
     print("Enter letters to search for filler words (e.g., 'bhptw'):")
     letters = input().strip().lower()
-    # You may want to add validation to ensure input is only letters
+
+    # ensure input is only letters
+    while not letters.isalpha():
+        print("\t⚠️ use only letters ⚠️")
+        letters = input().strip().lower()
+
     return letters
 
 
-def calculate_word_score(word):
+def calculate_word_score(word, count_duplicates=False):
     """
     Calculate a score for a word based on the presence of common letters.
     Each letter contributes its score to the word's total score.
     """
-    return sum(letter_scores.get(letter, 0) for letter in set(word))
+    if guess_count > 2:
+        count_duplicates = True
+
+    if count_duplicates:
+        return sum(letter_scores.get(letter, 0) for letter in word)
+    else:
+        return sum(letter_scores.get(letter, 0) for letter in set(word))
 
 
 # Update the recommend function to return a list of recommendations
@@ -302,22 +287,25 @@ def recommend(words, n=5, length=WORD_LENGTH, prefix=PREFIX):
         if len(word) == length and (prefix is None or word.startswith(prefix))
     ]
     scored_words = [(word, calculate_word_score(word)) for word in filtered_words]
+
     # Sort by score in descending order
     scored_words.sort(key=lambda x: x[1], reverse=True)
-    recommendations = [word for word, score in scored_words[:n]]
+
     return scored_words[:n]
 
 
-def get_guess():
+def get_guess(n=5):
     """
     This function prompts the user to enter their guess and the corresponding feedback.
     """
     # The user manually selects a guess
-    recommended_guesses = recommend(words, 5)  # Get up to 5 recommendations
+    recommended_guesses = recommend(words, n)  # Get up to n recommendations
     print("Recommended guesses:")
     for i, (guess, score) in enumerate(recommended_guesses, 1):
-        print(f"{i}. {guess} - {round(score, 1)}")
-    print("Enter your guess, or choose 1-5 from the recommendations, or 0 for fillers:")
+        print(f"{i}. {guess} - {round(score, 2)}")
+    print(
+        f"\nEnter your guess, or choose 1-{n} from the recommendations, or 0 for fillers:"
+    )
 
     guess = ""
     while not guess:
@@ -327,16 +315,16 @@ def get_guess():
             letters = prompt_for_filler_letters()
             filler_words = find_filler_words(temp_words, letters)
             print(f"Filler words for letters '{letters}': {', '.join(filler_words)}")
+
         if user_input.isdigit() and 1 <= int(user_input) <= len(recommended_guesses):
             guess = recommended_guesses[int(user_input) - 1][0]
+
         if is_good_guess(user_input) and user_input.isalpha():
             guess = user_input
 
-    # Prompt the user to enter the result of their guess
-    print(f"put the result of '{guess}'")
     result = ""
     while not result:
-        result = input("enter the result of your guess: ")
+        result = input(f"enter the result of your guess, '{guess}': ")
         result = result.strip().lower()
 
         if len(result) != WORD_LENGTH:
@@ -347,6 +335,7 @@ def get_guess():
         if not all(char in "gyb" for char in result):
             print("\t⚠️ use only 'gyb' for result ⚠️")
             result = ""
+
     # Convert the guess and the result to a list of tuples
     return list(zip(guess, result))
 
@@ -393,34 +382,42 @@ def add_to_dictionary(word):
 
     # Add the word to the dictionary
     word = word.strip().lower()
+
+    # we use temp_words here to get the full list of words
     temp_words.append(word)
     with open(FILENAME, "w") as file:
         json.dump(temp_words, file)
     print(f"added '{word}' to the dictionary\n")
 
 
-# Initialize the guess counter and user choice
 guess_count = 1
 choice = "yes"
 has_word = ""
 
 # Keep playing as long as the user wants to continue
 while keep_playing(choice):
+
     # Filter the possible words based on the user's guess and feedback
-    words = reverse_filter(words, get_guess())
-    guess_count += 1
+    n = min(len(words), 9)  # Limit the number of recommendations to 9
+    words = reverse_filter(words, get_guess(n))
+
     if len(words) > 30:
         print(f"{len(words)} remaining")
+
     # If the number of possible words is small, print them out
     if len(words) <= 30:
         p_words = pretty_print(words)
-        print(f"🔥 {len(words)} remaining: {p_words} 🔥")
-    # If there's only one possible word left, we've found the answer
+        print(f"\n🔥 {len(words)} remaining: {p_words} 🔥\n")
+
+    # If there's only one possible word left, we've likely found the answer
     if len(words) == 1:
         print("✅ found it! ✅\n")
+
     # If there are no possible words left, it's not in the dictionary
     if len(words) == 0:
         print("🚫 word not in this dictionary 🚫\n")
+
+    # If our dictionary is missing a word, then add it
     if len(words) <= 1:
         has_word = input("was your word in the dictionary? (y/n): ")
         if "n" in has_word:
