@@ -76,11 +76,14 @@ def reverse_filter(words, guess):
     - 'b' stands for 'black' (incorrect letter)
 
     Example:
-    If the guess is [('d', 'g'), ('r', 'y'), ('i', 'b'), ('e', 'b'), ('d', 'b')],
-    the function will filter the words based on the following criteria:
+    The guess is "daddy" and the feedback is "gbybb".
+    
+    guess = [('d', 'g'), ('a', 'b'), ('d', 'y'), ('d', 'b'), ('y', 'b')]
+
+    The function will filter the words based on the following criteria:
     - The letter 'd' must be present in the first position.
-    - The letter 'r' must be present but not in the second position.
-    - The letters 'i', 'e', and 'd' must not be present in the word more times than allowed by the feedback.
+    - The letter 'd' must be present but not in the third position.
+    - The letters 'a', 'd', and 'y' must not be present in the word more times than allowed by the feedback.
 
     This function works in two stages:
     1. Filters words based on the count of 'g' (green) and 'y' (yellow) feedback for each letter.
