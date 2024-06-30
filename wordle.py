@@ -70,30 +70,20 @@ def reverse_filter(words, guess):
     """
     Filters a list of words based on the user's guess and feedback.
 
+    This function filters words in a single stage, considering both the count of
+    'g' (green) and 'y' (yellow) feedback for each letter and their positions.
+
     Feedback explanation:
     - 'g' stands for 'green' (correct letter in the correct position)
     - 'y' stands for 'yellow' (correct letter in the wrong position)
     - 'b' stands for 'black' (incorrect letter)
 
     Example:
-    The guess is "daddy" and the feedback is "gbybb".
-
-    guess = [('d', 'g'), ('a', 'b'), ('d', 'y'), ('d', 'b'), ('y', 'b')]
-
-    The function will filter the words based on the following criteria:
+    If the guess is [('d', 'g'), ('r', 'y'), ('i', 'b'), ('e', 'b'), ('d', 'b')],
+    the function will filter the words based on the following criteria:
     - The letter 'd' must be present in the first position.
-    - The letter 'd' must be present but not in the third position.
-    - The letters 'a', 'd', and 'y' must not be present in the word more times than allowed by the feedback.
-
-    This function works in two stages:
-    1. Filters words based on the count of 'g' (green) and 'y' (yellow) feedback for each letter.
-       This ensures that the feedback matches the count of 'g' and 'y' for each letter.
-       This stage is important for handling cases where the answer contains duplicate letters.
-       For example, if the answer is 'dried' and the guess is 'daddy' with feedback 'gbybb',
-       the word 'dried' should not be filtered out because it contains a 'd' with green feedback
-       and a 'd' with black feedback. This allows the script to handle such cases correctly.
-    2. Filters words based on the position of the letter and feedback.
-       This ensures that the position-specific feedback is applied to each letter in the guess.
+    - The letter 'r' must be present but not in the second position.
+    - The letters 'i', 'e', and 'd' must not be present in the word more times than allowed by the feedback.
 
     Parameters:
     words (list): List of candidate words to filter.
@@ -103,7 +93,7 @@ def reverse_filter(words, guess):
     list: List of words that match the feedback.
     """
     # Dictionary to hold counts of 'g' and 'y' for each letter
-    correct_counts = {letter: 0 for letter, _ in guess}
+    correct_counts = {letter: 0 for letter, _ in guess} 
     present_counts = {letter: 0 for letter, _ in guess}
 
     # First pass to count 'g' and 'y'
@@ -113,55 +103,32 @@ def reverse_filter(words, guess):
         elif feedback == "y":
             present_counts[letter] += 1
 
-    # Filter words based on 'g' and 'y' counts first
-    def filter_based_on_feedback(word):
-        """
-        Filter words based on the count of 'g' and 'y' for each letter.
-
-        Parameters:
-        word (str): A word to filter.
-
-        Returns:
-        bool: True if the word passes the filter, False otherwise
-        """
+    # Combined filtering based on feedback and position
+    def filter_by_feedback(word):
         word_letter_counts = {letter: word.count(letter) for letter, _ in guess}
-        for letter, feedback in guess:
-            if feedback == "g" and word_letter_counts[letter] < correct_counts[letter]:
-                return False
-            if feedback == "y" and (
-                letter not in word
-                or word_letter_counts[letter] <= correct_counts[letter]
-            ):
-                return False
-            if (
-                feedback == "b"
-                and letter in word
-                and word_letter_counts[letter]
-                > (correct_counts[letter] + present_counts[letter])
-            ):
-                return False
+
+        for i, (letter, feedback) in enumerate(guess):
+            if feedback == "g":
+                if (
+                    word[i] != letter
+                    or word_letter_counts[letter] < correct_counts[letter]
+                ):
+                    return False
+            elif feedback == "y":
+                if (
+                    letter not in word
+                    or word[i] == letter
+                    or word_letter_counts[letter] <= correct_counts[letter]
+                ):
+                    return False
+            elif feedback == "b":
+                if letter in word and word_letter_counts[letter] > (
+                    correct_counts[letter] + present_counts[letter]
+                ):
+                    return False
         return True
 
-    words = [word for word in words if filter_based_on_feedback(word)]
-
-    # Detailed filtering for each letter based on position and feedback
-    for i in range(len(guess)):
-        letter, feedback = guess[i]
-
-        if feedback == "g":
-            words = [word for word in words if word[i] == letter]
-        elif feedback == "y":
-            words = [word for word in words if letter in word and word[i] != letter]
-        elif feedback == "b":
-            # Exclude words where letter count in the word exceeds allowed 'g' and 'y' counts
-            words = [
-                word
-                for word in words
-                if word.count(letter)
-                <= (correct_counts[letter] + present_counts[letter])
-            ]
-
-    return words
+    return [word for word in words if filter_by_feedback(word)]
 
 
 def letter_frequency(words=temp_words, length=WORD_LENGTH, prefix=PREFIX):
