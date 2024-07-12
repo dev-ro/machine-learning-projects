@@ -179,7 +179,7 @@ def is_good_guess(word):
     Then it checks if the guess contains only letters
     Then it checks if the guess is a feedback response of 'g', 'y', and/or 'b'
     """
-    if len(word) != WORD_LENGTH and word.isalpha():
+    if len(word) != WORD_LENGTH:
         print(f"\t⚠️  word length must be {WORD_LENGTH} ⚠️")
         return False
 
@@ -215,10 +215,11 @@ def get_guess():
             letters = prompt_for_filler_letters()
             filler_words = find_filler_words(temp_words, letters)
             print(f"Filler words for letters '{letters}': {', '.join(filler_words)}")
+            continue
 
         if user_input.isdigit() and 1 <= int(user_input) <= len(recommended_guesses):
             guess = recommended_guesses[int(user_input) - 1][0]
-            break
+            continue
 
         if is_good_guess(user_input):
             guess = user_input
