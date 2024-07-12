@@ -15,9 +15,8 @@ from collections import Counter
 # try it out in any language with your own json dictionary file!
 
 WORD_LENGTH = None
-FILENAME = "words.json"  # Name of the file to save the words
+FILENAME = "words.json"
 
-# Default word length
 DEFAULT_WORD_LENGTH = 5
 PREFIX = None
 
@@ -46,8 +45,7 @@ def load_words(filename):
         with open(filename, "r") as file:
             return json.load(file)
     else:
-        print(f"Error: File '{filename}' not found.")
-        sys.exit(1)
+        sys.exit(f"Error: File '{filename}' not found.")
 
 
 words = load_words(FILENAME)  # this list will be filtered down to the possible words
