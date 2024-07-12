@@ -3,6 +3,17 @@ import os
 import sys
 from collections import Counter
 
+# instructions: default (no args) word length is 5 and no prefix (Wordle rules). just run 'python wordle.py'
+# 
+# run the script with the word length as the first argument and the prefix as the second argument
+# example: 'python wordle.py 7 p' will find a 7-letter word starting with 'p' (for Twitch version)
+# prefix arg is optional but if you want to use it, you must provide a word length argument
+# 
+# word length arg does not require a prefix arg. so 'python wordle.py 11' will find an 11-letter word (for TikTok versions)
+# 
+# change the filename to load a different dictionary like spanish-words.json or words.json for english
+# try it out in any language with your own json dictionary file!
+
 WORD_LENGTH = None
 FILENAME = "words.json"  # Name of the file to save the words
 
@@ -43,13 +54,11 @@ words = load_words(FILENAME)  # this list will be filtered down to the possible 
 # use temp_words to store the full list of words. used for adding new words
 temp_words = words
 
-if PREFIX:
-    words = [
-        word for word in words if word.startswith(PREFIX) and len(word) == WORD_LENGTH
-    ]
-else:
-    words = [word for word in words if len(word) == WORD_LENGTH]
-
+words = [
+    word
+    for word in words
+    if len(word) == WORD_LENGTH and (PREFIX is None or word.startswith(PREFIX))
+]
 
 def is_good_guess(word):
     """
@@ -60,9 +69,15 @@ def is_good_guess(word):
     if len(word) != WORD_LENGTH and word.isalpha():
         print("\t⚠️ wrong guess length")
         return False
+    
+    if not word.isalpha():
+        print("\t⚠️ use only letters")
+        return False
+    
     if all(char in "gyb" for char in word):
         print("\t⚠️ enter a guess here, not feedback")
         return False
+    
     return True
 
 
@@ -93,8 +108,8 @@ def reverse_filter(words, guess):
     list: List of words that match the feedback.
     """
     # Dictionary to hold counts of 'g' and 'y' for each letter
-    correct_counts = {letter: 0 for letter, _ in guess} 
-    present_counts = {letter: 0 for letter, _ in guess}
+    correct_counts = {letter: 0 for letter, _ in guess}  # 'g' feedback
+    present_counts = {letter: 0 for letter, _ in guess}  # 'y' feedback
 
     # First pass to count 'g' and 'y'
     for letter, feedback in guess:
@@ -104,7 +119,7 @@ def reverse_filter(words, guess):
             present_counts[letter] += 1
 
     # Combined filtering based on feedback and position
-    def filter_by_feedback(word):
+    def is_possible(word):
         word_letter_counts = {letter: word.count(letter) for letter, _ in guess}
 
         for i, (letter, feedback) in enumerate(guess):
@@ -128,7 +143,7 @@ def reverse_filter(words, guess):
                     return False
         return True
 
-    return [word for word in words if filter_by_feedback(word)]
+    return [word for word in words if is_possible(word)]
 
 
 def letter_frequency(words=temp_words, length=WORD_LENGTH, prefix=PREFIX):
@@ -188,6 +203,8 @@ def normalize_frequencies(frequencies=letter_frequency()):
     The normalized frequencies are used to score words based on the presence
     of common letters. The score is calculated by summing the normalized
     frequencies of letters in the word.
+
+    The letter_scores dictionary is used in the calculate_word_score function.
     """
 
     max_freq = max(frequencies.values())
@@ -200,9 +217,6 @@ def normalize_frequencies(frequencies=letter_frequency()):
     }
 
     return normalized_frequencies
-
-
-letter_scores = normalize_frequencies()
 
 
 def find_varying_positions(words):
@@ -411,6 +425,7 @@ def add_to_dictionary(word):
     print(f"added '{word}' to the dictionary\n")
 
 
+letter_scores = normalize_frequencies()
 guess_count = 1
 choice = "yes"
 has_word = ""
@@ -418,7 +433,6 @@ has_word = ""
 # Keep playing as long as the user wants to continue
 while keep_playing(choice):
 
-    # Filter the possible words based on the user's guess and feedback
     n = min(len(words), 9)  # Limit the number of recommendations to 9
     words = reverse_filter(words, get_guess(n))
     guess_count += 1  # Increment the guess count for scoring
