@@ -180,7 +180,7 @@ def is_good_guess(word):
     Then it checks if the guess is a feedback response of 'g', 'y', and/or 'b'
     """
     if len(word) != WORD_LENGTH and word.isalpha():
-        print("\t⚠️  wrong guess length")
+        print(f"\t⚠️  word length must be {WORD_LENGTH} ⚠️")
         return False
 
     if not word.isalpha():
@@ -229,12 +229,12 @@ def get_guess():
         result = result.strip().lower()
 
         if len(result) != WORD_LENGTH:
-            print("\t⚠️ wrong result length ⚠️")
+            print(f"\t⚠️  word length must be {WORD_LENGTH} ⚠️")
             result = ""
 
         # if the result contains invalid characters, it's not a valid result
         if not all(char in "gyb" for char in result):
-            print("\t⚠️ use only 'gyb' for result ⚠️")
+            print("\t⚠️  use only 'gyb' for result ⚠️")
             result = ""
 
     # Convert the guess and the result to a list of tuples
@@ -395,12 +395,12 @@ def add_to_dictionary(word):
     This function adds a word to the dictionary.
     """
 
-    def check(word):
+    def is_valid(word):
         """
         This function checks if the word is valid.
         """
         if word == "exit":
-            sys.exit("👋 bye! 👋")
+            sys.exit("👋  bye!👋\n")
 
         if len(word) != WORD_LENGTH:
             print(f"⚠️  word length must be {WORD_LENGTH} ⚠️")
@@ -412,11 +412,8 @@ def add_to_dictionary(word):
         
         return True
 
-    is_valid = check(word)
-
-    while not is_valid:
+    while not is_valid(word):
         word = input("enter a valid word or 'exit': ")
-        is_valid = check(word)
 
     # Add the word to the dictionary
     word = word.strip().lower()
@@ -429,7 +426,7 @@ def add_to_dictionary(word):
 
 
 if __name__ == "__main__":
-    
+
     while True:
         words = get_possible(words, get_guess())
         guess_count += 1  # Increment the guess count for scoring
@@ -457,4 +454,4 @@ if __name__ == "__main__":
                 answer = input("what was the answer? ")
                 add_to_dictionary(answer)
             else:
-                sys.exit("🎉 yay! 🎉")
+                sys.exit("🎉 yay! 🎉\n")
